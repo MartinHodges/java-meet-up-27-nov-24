@@ -1,0 +1,35 @@
+global:
+  enabled: true
+  tlsDisable: true
+  namespace: vault
+ui:
+  enabled: true
+  serviceType: NodePort
+  serviceNodePort: 31400
+server:
+  dataStorage:
+    storageClass: standard
+  logLevel: debug
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        cluster_name = "vault-integrated-storage"
+        storage "raft" {
+           path  = "/vault/data/"
+        }
+        
+        listener "tcp" {
+           address = "0.0.0.0:8200"
+           cluster_address = "0.0.0.0:8201"
+           tls_disable = "true"
+        }
+        service_registration "kubernetes" {}
+
+injector:
+  enabled: true
+  logLevel: debug

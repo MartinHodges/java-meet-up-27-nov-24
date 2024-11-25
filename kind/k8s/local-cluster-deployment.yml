@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aquarium-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aquarium-api
+  template:
+    metadata:
+      labels:
+        app: aquarium-api
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "aquarium-k8s-role"
+        vault.hashicorp.com/agent-inject-secret-db.properties: "aquarium-db/creds/aquarium-db-role"
+        vault.hashicorp.com/auth-path: "auth/kubernetes"
+        vault.hashicorp.com/agent-run-as-user: "1881"
+        vault.hashicorp.com/agent-pre-populate: "true"
+        vault.hashicorp.com/agent-pre-populate-only: "false"
+    spec:
+      serviceAccountName: aquarium-api-sa
+      restartPolicy: Always
+      containers:
+        - name: aquarium-api
+          image: aquarium-api-local-cluster:01
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            # Note that the following environment variable is converted to a
+            # property override called spring.profiles.active when read by Spring
+            - name: SPRING_PROFILES_ACTIVE
+              value: local-cluster
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            initialDelaySeconds: 30
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 10
+            initialDelaySeconds: 30
+            failureThreshold: 30
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            initialDelaySeconds: 30
+            failureThreshold: 30
+          resources:
+            limits:
+              cpu: 1200m
+              memory: 2000Mi
+            requests:
+              cpu: 400m
+              memory: 600Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - "aquarium-api"
+                topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aquarium-api
+  namespace: default
+spec:
+  selector:
+    app: aquarium-api
+  type: NodePort
+  ports:
+    - name: web
+      port: 80
+      targetPort: 8080
+      nodePort: 30000

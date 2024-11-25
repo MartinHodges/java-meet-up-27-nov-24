@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aquarium-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aquarium-api
+  template:
+    metadata:
+      labels:
+        app: aquarium-api
+    spec:
+      containers:
+      - name: aquarium-api
+        image: aquarium-api-k8s-debug:01
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8080
+        env:
+          # Note that the following environment variable is converted to a
+          # property override called spring.profiles.active when read by Spring
+          - name: SPRING_PROFILES_ACTIVE
+            value: k8s-debug
+          - name: STATIC_DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: static-db-credentials
+                key: username
+          - name: STATIC_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: static-db-credentials
+                key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aquarium-api
+  namespace: default
+spec:
+  selector:
+    app: aquarium-api
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aquarium-api-debug-svc
+  namespace: default
+spec:
+  selector:
+    app: aquarium-api
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30500

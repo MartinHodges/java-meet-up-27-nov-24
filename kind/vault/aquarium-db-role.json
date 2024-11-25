@@ -1,0 +1,6 @@
+{
+  "db_name": "aquarium-db-cnx",
+  "creation_statements": "CREATE ROLE \"{{name}}\" WITH LOGIN INHERIT PASSWORD '{{password}}' IN ROLE \"app-user\" VALID UNTIL '{{expiration}}';ALTER USER \"{{name}}\" SET ROLE = \"app-user\";",
+  "default_ttl": "3m",
+  "max_ttl": "3m"
+}

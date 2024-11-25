@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: "jdbc:h2:mem:aquarium_db;INIT=CREATE SCHEMA IF NOT EXISTS aquarium_schema\\;SET SCHEMA aquarium_schema"
+    username: ${db.username}
+    password: ${db.password}
+    driverClassName: org.h2.Driver
+    hikari:
+      connectionTimeout: 20000
+      maximumPoolSize: 5
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        default_schema: aquarium_schema
+        # pretty print SLQ commands
+        format_sql: true
+    hibernate:
+      # <create | create-drop | update | validate | none>
+      ddl-auto: update
+    # enable debugging of SQL commands
+    show-sql: true
+    generate-ddl: true
+  liquibase:
+    enabled: false
+
+# log SQL commands
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.security: INFO

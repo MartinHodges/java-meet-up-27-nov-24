@@ -1,0 +1,32 @@
+global:
+  enabled: true
+  tlsDisable: true
+  namespace: vault
+ui:
+  enabled: true
+  serviceType: NodePort
+  serviceNodePort: 31400
+server:
+  dataStorage:
+    storageClass: standard
+  logLevel: debug
+  ha:
+    enabled: false
+  standalone:
+    enabled: true
+    raft:
+      enabled: true
+      config: |
+        ui = true
+        listener "tcp" {
+           address = "0.0.0.0:8200"
+           cluster_address = "0.0.0.0:8201"
+           tls_disable = "true"
+        }
+        storage "file" {
+          path = "/vault/data"
+        }
+
+injector:
+  enabled: true
+  logLevel: debug

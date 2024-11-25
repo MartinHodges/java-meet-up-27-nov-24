@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: aquarium-api
+  profiles:
+    active: standalone
+  # datasources are to be defined within profile specific properties files
+
+application:
+  dynamic-db-config:
+    enabled: false
+    filename: ""
+    refresh: 5
+
+management:
+  endpoint:
+    health:
+      enabled: true
+      probes:
+        enabled: true
+      livenessState:
+        enabled: true
+      readinessState:
+        enabled: true
+      show-details: always
+      group:
+        liveness:
+          include: livenessState #,kafka
+        readiness:
+          include: readinessState #,kafka
+    prometheus:
+      enabled: true
+      probes:
+        enabled: true
+      livenessState:
+        enabled: true
+      readinessState:
+        enabled: true
+      show-details: always
+    shutdown:
+      enabled: true
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+          - shutdown
+  tracing:
+    sampling:
+      probability: "1.0f"
+  metrics.tags:
+    application: ${spring.application.name}
+
+server:
+  port: 8080
+  shutdown: graceful
+
+# log SQL commands
+logging:
+  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org:springframework.security: INFO

@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db-cluster-rw.pg.svc:5432/aquarium_db?currentSchema=aquarium_schema
+    # username: injected using Vault Injector
+    # password: injected using Vault Injector
+    hikari:
+      connectionTimeout: 20000
+      maximumPoolSize: 5
+
+  jpa:
+    properties:
+      hibernate:
+        default_schema: "aquarium_schema"
+        # pretty print SLQ commands
+        format_sql: false
+    hibernate:
+      # <create | create-drop | update | validate | none>
+      ddl-auto: create
+    # enable debugging of SQL commands
+    show-sql: false
+  liquibase:
+    enabled: true
+    default_schema: "aquarium_schema"
+
+application:
+  dynamic-db-config:
+    enabled: true
+    filename: "/vault/secrets/db.properties"
+    refresh: 1
+
+
+# log SQL commands
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

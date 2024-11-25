@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: initial-set-up-01
+      author: ces
+      changes:
+        - sqlFile:
+            dbms: 'PostgreSQL'
+            endDelimiter: \nEOF
+            splitStatements: true
+            path: v1.00/setup.sql
+            relativeToChangelogFile: true
+
+
+

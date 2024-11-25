@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:30322/aquarium_db?currentSchema=aquarium_schema
+    username: ${STATIC_DB_USERNAME}
+    password: ${STATIC_DB_PASSWORD}
+    hikari:
+      connectionTimeout: 20000
+      maximumPoolSize: 5
+
+  jpa:
+    properties:
+      hibernate:
+        default_schema: "aquarium_schema"
+        # pretty print SLQ commands
+        format_sql: true
+    hibernate:
+      # <create | create-drop | update | validate | none>
+      ddl-auto: create
+    # enable debugging of SQL commands
+    show-sql: true
+
+  liquibase:
+    enabled: true
+    default_schema: "aquarium_schema"
+
+# log SQL commands
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

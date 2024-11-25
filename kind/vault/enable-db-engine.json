@@ -1,0 +1,14 @@
+{
+  "type":"database",
+  "description":"Database engine for aquarium_db",
+  "config":{
+    "options":null,
+    "default_lease_ttl":"1h",
+    "max_lease_ttl":"24h",
+    "force_no_cache":false
+  },
+  "local":false,
+  "seal_wrap":false,
+  "external_entropy_access":false,
+  "options":null
+}

@@ -1,0 +1,172 @@
+######################## Creating the Kind Cluster ########################
+
+Creating cluster starting Sun 24 Nov 2024 08:50:20 AEDT
+Creating cluster "jmu-2" ...
+ ✓ Ensuring node image (kindest/node:v1.29.2) 🖼 
+ ✓ Preparing nodes 📦 📦 📦 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+ ✓ Joining worker nodes 🚜 
+Set kubectl context to "kind-jmu-2"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-jmu-2
+
+Thanks for using kind! 😊
+
+######################## Switching kubectl context ########################
+
+Switched to context "kind-jmu-2".
+
+######################## Updating local Helm repo  ########################
+
+Updating local helm repo
+"grafana" already exists with the same configuration, skipping
+"cnpg" already exists with the same configuration, skipping
+"hashicorp" already exists with the same configuration, skipping
+"external-secrets" already exists with the same configuration, skipping
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "jetstack" chart repository
+...Successfully got an update from the "mongodb" chart repository
+...Successfully got an update from the "hashicorp" chart repository
+...Successfully got an update from the "kong" chart repository
+...Successfully got an update from the "istio" chart repository
+...Successfully got an update from the "external-secrets" chart repository
+...Successfully got an update from the "grafana" chart repository
+...Successfully got an update from the "cnpg" chart repository
+Update Complete. ⎈Happy Helming!⎈
+
+######################## Adding the Grafna/Loki/Promtheus stack  ########################
+
+Adding grafana/loki
+namespace/monitoring created
+NAME: loki
+LAST DEPLOYED: Sun Nov 24 08:51:01 2024
+NAMESPACE: monitoring
+STATUS: deployed
+REVISION: 1
+NOTES:
+The Loki stack has been deployed to your cluster. Loki can now be added as a datasource in Grafana.
+
+See http://docs.grafana.org/features/datasources/loki/ for more detail.
+service/grafana created
+
+######################## Adding Vault  ########################
+
+Installing vault
+namespace/vault created
+NAME: vault
+LAST DEPLOYED: Sun Nov 24 08:53:05 2024
+NAMESPACE: vault
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://developer.hashicorp.com/vault/docs
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+
+######################## Initialising and unsealing Vault  ########################
+
+Initialising and unsealing vault (see vault_creds.tmp for details)
+{"type":"shamir","initialized":true,"sealed":false,"t":1,"n":1,"progress":0,"nonce":"","version":"1.18.1","build_date":"2024-10-29T14:21:31Z","migration":false,"cluster_name":"vault-cluster-0bc0fba7","cluster_id":"827b0d68-c568-3449-5076-b57698d58104","recovery_seal":false,"storage_type":"file"}
+Vault unsealed - credentials in vault_creds.tmp
+Configuring vault engines and secrets
+
+######################## Prepping for Spring Boot App  ########################
+
+serviceaccount/aquarium-api-sa created
+clusterrolebinding.rbac.authorization.k8s.io/aquarium-tokenreview-binding created
+
+######################## Adding External Secrets Operator  ########################
+
+Installing external secrets
+namespace/eso created
+NAME: external-secrets
+LAST DEPLOYED: Sun Nov 24 08:53:34 2024
+NAMESPACE: eso
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+external-secrets has been deployed successfully in namespace eso!
+
+In order to begin using ExternalSecrets, you will need to set up a SecretStore
+or ClusterSecretStore resource (for example, by creating a 'vault' SecretStore).
+
+More information on the different types of SecretStores and how to configure them
+can be found in our Github: https://github.com/external-secrets/external-secrets
+secret/vault-token created
+secretstore.external-secrets.io/vault-backend created
+{"request_id":"b0a0386e-70e5-aa96-aed2-2870914145ab","lease_id":"","renewable":false,"lease_duration":0,"data":{"created_time":"2024-11-23T21:55:37.62138826Z","custom_metadata":null,"deletion_time":"","destroyed":false,"version":1},"wrap_info":null,"warnings":null,"auth":null,"mount_type":"kv"}
+externalsecret.external-secrets.io/static-db-credentials created
+
+######################## Adding Postgres using the cnpg operator  ########################
+
+Adding postgres operator and creating database
+namespace/pg created
+NAME: cnpg
+LAST DEPLOYED: Sun Nov 24 08:55:39 2024
+NAMESPACE: pg
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CloudNativePG operator should be installed in namespace "pg".
+You can now create a PostgreSQL cluster with 3 nodes in the current namespace as follows:
+
+cat <<EOF | kubectl apply -f -
+# Example of PostgreSQL cluster
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cluster-example
+spec:
+  instances: 3
+  storage:
+    size: 1Gi
+EOF
+
+kubectl get cluster
+
+Deploying postgres database
+secret/pg-superuser created
+secret/app-user created
+cluster.postgresql.cnpg.io/db-cluster created
+service/pg created
+Waiting for database cluster to be created
+Waiting for database cluster to be ready
+pod/db-cluster-1 condition met
+
+Cluster created
+
+######################## Accessing our utility services  ########################
+
+You can now access your services on:
+	application: http://localhost:30102
+	grafana:     http://localhost:31302
+	postgres:    http://localhost:31322
+	vault:       http://localhost:31402
+
+######################## Finding credentials to use  ########################
+
+You can find credentials in: (not saved in git)
+	kind/vault_creds.tmp
+	kind/grafana_creds.tmp
+	kind/pg_creds.tmp
+
+Happy development...
+
+######################## Total time 7 mins  ########################
+
+Finished  Sun 24 Nov 2024 08:57:02 AEDT

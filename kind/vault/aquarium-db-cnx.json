@@ -1,0 +1,9 @@
+{
+  "plugin_name": "postgresql-database-plugin",
+  "allowed_roles": "aquarium-db-role",
+  "connection_url": "postgresql://{{username}}:{{password}}@db-cluster-rw.pg.svc:5432/aquarium_db",
+  "max_open_connections": 5,
+  "max_connection_lifetime": "5s",
+  "username": "adminuser",
+  "password": "supersecret"
+}

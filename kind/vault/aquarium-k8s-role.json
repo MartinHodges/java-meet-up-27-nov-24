@@ -1,0 +1,6 @@
+{
+  "bound_service_account_names": "aquarium-api-sa",
+  "bound_service_account_namespaces": "default",
+  "token_policies": "aquarium-db-policy",
+  "ttl": "1h"
+}
