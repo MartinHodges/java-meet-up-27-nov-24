@@ -93,8 +93,9 @@ to use, eg:
 During the MeetUp, I set up the environment using:
 ```./create-local-cluster.sh jmu-2 2```
 
-The script should complete successfully and I have included a copy
-of my script output for reference (`create-cluster-log.txt`).
+The script should complete successfully and I have included an
+annotated copy of my script output for reference
+(`kind/create-cluster-log.txt`).
 
 At the end of the run, it should announce the following 
 connections:
@@ -121,7 +122,7 @@ The port number will be based on the port number you chose earlier.
 
 The cluster creation script is built to skip anything already
 deployed. If you want to deploy something again, you can delete
-the namespace and then rerun the script.
+the relevant namespace and then rerun the script.
 
 For example, if you want to reinstall `vault`:
 
@@ -137,7 +138,7 @@ again:
 kind delete cluster --name <cluster-name>
 ```
 
-Or even just create a new cluster!
+Or even just create a new cluster with a different name!
 
 ## Create Aquarium Spring Boot Application
 
@@ -191,25 +192,11 @@ credentials from Vault. These are stored as a Vault K2
 (version 2) secret at the path of 
 `aquarium-api/static-db-credentials`.
 
-To create this, you need to log in to vault, locate the
-aquarium-api KV V2 secrets engine (this should have been
-created when setting up your kind cluster) and then add
-a new secret called `db`. Edit this as a JSON entry and 
-add the following:
-```json lines
-{
-  "password": "app-secret",
-  "username": "app-user"
-}
-```
-You will then need to apply a Kubernetes manifest to link
-the vault secret to the Kubernetes secret:
-```
-kubectl apply -f k8s/external-secrets-db.yml
-```
-Once this has been deployed, you should have a
-Kubernetes secret called `static-db-credentials` when
-you run:
+You will find that the `create-local-cluster.sh` script
+creates this set of static database credentials for you.
+
+You should have a Kubernetes secret called 
+`static-db-credentials` when you run:
 ```
 kubectl get secrets
 ```
@@ -226,6 +213,8 @@ image using the `Dockerfile.k8s-debug` file.
 This version is close to the production environment and
 uses dynamic credentials from Vault.
 
+***This is the profile you should use for this demonstration.***
+
 To use this profile, it is necessary to build the docker
 image using the `Dockerfile.local-cluster`.
 
@@ -237,7 +226,7 @@ it into your Kind cluster.
 
 If you want to skip these steps, you can go straight
 to the scripts I have provided (don't forget to use
-your cluster name):
+your own cluster name):
 ```
 kind/scripts/deploy-k8s-debug-to-kind.sh <cluster-name>
 kind/scripts/deploy-local-cluster-to-kind.sh <cluster-name>
@@ -246,7 +235,7 @@ kind/scripts/deploy-local-cluster-to-kind.sh <cluster-name>
 ### Building the JAR File
 To build the dockerfile, you first need an executable
 JAR. From the command line and then load it into your
-Kind cluster. :
+Kind cluster:
 ```
 ./gradlew bootJar
 ```
@@ -257,15 +246,13 @@ build/libs/aquarium-api-0.0.1-SNAPSHOT.jar
 ```
 
 Once you have this, it can now be turned into a Docker
-image. Use the following, remembering to use the profile:
+image. Use the following, remembering to use the 
+appropriate profile:
 ```
 docker build -t aquarium-api-<profile>:01 -f Dockerfile.<profile> .
 ```
 This is using the local cluster profile. Use the other
 Dockerfile for the `k8s-debug` version.
-
-To simplify this process, there is a
-script you can use from the root of the project
 
 ### Loading the Docker image
 
@@ -300,19 +287,21 @@ first delete the previous deployment with:
 kubectl delete -f kind/k8s/k8s-debug-deployment.yml
 kubectl delete -f kind/k8s/local-cluster-deployment.yml
 ```
+The script automatically does this for you.
 
 ## Technical details
 
 You do not need to know this to use the cluster but for those who
-are interested, here is a quick explanation.
+are interested, here is a quick explanation of what is created.
 
-Grafana (and prometheus) are installed on each Kubernetes node
+Grafana, Loki and Prometheus are installed on each Kubernetes node
 and collect and process the logs from all pods on that node. This
 includes the Kubernetes system pods itself. You can find an admin
 access password in `grafana_creds.tmp` to allow you to log in.
 
 Vault is installed and unsealed. You can find a superuser access 
-token in `vault_creds.tmp` to allow you to log in.
+token in `vault_creds.tmp` to allow you to log in. You will also
+find the single Shamir key to unseal the vault should you need to.
 
 Postgres 15 is installed using the `cnpg/cloudnative-pg` Kubernetes
 postgres operator. It is exposed to the host so that you can use 
@@ -375,4 +364,26 @@ can be deployed to a Kind cluster.
 
 Now we have our cluster, we can now build our Spring Boot 
 application and install it into the cluster.
+
+The application is used to create a bootable JAR, which is
+then added to a Docker image to allow it to be run within
+your Kubernetes cluster.
+
+The deployment file for the application is annotated with
+Vault settings to tell Vault to:
+1. Inject an Init containers to obtain a password (`vault-agent-init`)
+2. Inject a sidecar to obtain ongoing passwords (`vault-agent`)
+3. Save the dynamic credentials to a shared volume with your application
+
+On start up, the `vault-agent-init` container will authenticate
+itself against Kubernetes using its ServiceAccount via Vault.
+It will then connect to Vault and obtain the credentials, which
+it will save in a shared volume.
+
+The init container will then terminate and this triggers the
+main application along with a `vault-agent` sidecar container.
+
+Periodically, the Vault Agent will obtian the latest credentials
+from Vault. It will then pass them to the application, which will
+then use them for accessing the database
 
